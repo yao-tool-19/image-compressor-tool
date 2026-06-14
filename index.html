@@ -18,6 +18,15 @@
             line-height: 1.6;
             color: #333;
         }
+        .ad-slot {
+            background: #f5f5f5;
+            border: 1px dashed #ccc;
+            padding: 2rem;
+            text-align: center;
+            color: #999;
+            margin: 1rem 0;
+            border-radius: 4px;
+        }
         .tips-top {
             color: #e53e3e;
             font-weight: bold;
@@ -95,11 +104,10 @@
         .btn:hover {
             background: #1d4ed8;
         }
-        .ad-area {
+        .bottom-ad {
             margin-top: 3rem;
             padding: 1rem 0;
             border-top: 1px solid #eee;
-            text-align: center;
         }
         .size-compare {
             font-size: 12px;
@@ -119,6 +127,11 @@
     </style>
 </head>
 <body>
+    <!-- 顶部广告位 -->
+    <div class="ad-slot">
+        顶部广告位（AdSense Top Ad Slot）
+    </div>
+
     <h1>免费在线图片压缩工具</h1>
     <p>支持 JPG、PNG、WebP 格式 | 单张最大 10MB</p>
     <p class="tips-top">⚠️ 微信/QQ内置浏览器可能无法正常使用，请用手机自带浏览器、Chrome、Edge打开</p>
@@ -144,9 +157,9 @@
 
     <button class="btn" id="downloadAll">一键下载全部图片</button>
 
-    <!-- 广告预留区域，Google AdSense 广告代码请放在这里 -->
-    <div class="ad-area">
-        <!-- 你的 AdSense 广告代码粘贴在这里 -->
+    <!-- 底部广告位 -->
+    <div class="bottom-ad ad-slot">
+        底部广告位（AdSense Bottom Ad Slot）
     </div>
 
     <script>
@@ -158,6 +171,15 @@
         const downloadAllBtn = document.getElementById('downloadAll');
 
         let compressedFiles = [];
+
+        // 单位自动转换函数（KB/MB）
+        function formatSize(bytes) {
+            if (bytes >= 1024 * 1024) {
+                return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+            } else {
+                return (bytes / 1024).toFixed(1) + ' KB';
+            }
+        }
 
         // 画质数值同步
         qualitySlider.addEventListener('input', () => {
@@ -215,19 +237,18 @@
 
         // 渲染单条结果（新增：显示前后大小对比）
         function renderItem(file, base64, name, originalSize) {
-            const compressedKB = (file.size / 1024).toFixed(1);
-            const originalKB = (originalSize / 1024).toFixed(1);
-            const reductionKB = (originalSize / 1024 - file.size / 1024).toFixed(1);
-            const reductionPercent = Math.round((1 - file.size / originalSize) * 100);
+            const compressedSize = file.size;
+            const reductionBytes = originalSize - compressedSize;
+            const reductionPercent = Math.round((1 - compressedSize / originalSize) * 100);
 
             const div = document.createElement('div');
             div.className = 'item-card';
             div.innerHTML = `
                 <img src="${base64}" alt="${name}">
                 <p style="font-size:14px;margin:0.3rem 0;">${name}</p>
-                <p class="size-compare original-size">原大小：${originalKB} KB</p>
-                <p class="size-compare compressed-size">压缩后：${compressedKB} KB</p>
-                <p class="size-compare reduction-percent">减少：${reductionKB} KB（约 ${reductionPercent}%）</p>
+                <p class="size-compare original-size">原大小：${formatSize(originalSize)}</p>
+                <p class="size-compare compressed-size">压缩后：${formatSize(compressedSize)}</p>
+                <p class="size-compare reduction-percent">减少：${formatSize(reductionBytes)}（约 ${reductionPercent}%）</p>
                 <a class="btn" href="${base64}" download="${name}">下载</a>
             `;
             resultList.appendChild(div);
