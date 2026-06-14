@@ -101,6 +101,21 @@
             border-top: 1px solid #eee;
             text-align: center;
         }
+        .size-compare {
+            font-size: 12px;
+            margin: 0.3rem 0;
+        }
+        .original-size {
+            color: #666;
+        }
+        .compressed-size {
+            color: #22a75d;
+            font-weight: bold;
+        }
+        .reduction-percent {
+            color: #996;
+            font-size: 11px;
+        }
     </style>
 </head>
 <body>
@@ -165,7 +180,7 @@
             handleFiles(fileInput.files);
         });
 
-        // 处理图片压缩
+        // 处理图片压缩（新增：接收原始文件大小）
         function handleFiles(files) {
             compressedFiles = [];
             resultList.innerHTML = '';
@@ -174,13 +189,13 @@
                 const reader = new FileReader();
                 reader.readAsDataURL(file);
                 reader.onload = e => {
-                    compressImage(e.target.result, file.name, qualitySlider.value / 100);
+                    compressImage(e.target.result, file.name, qualitySlider.value / 100, file.size);
                 };
             });
         }
 
-        // 核心压缩逻辑
-        function compressImage(base64, fileName, quality) {
+        // 核心压缩逻辑（新增：接收并传递原始文件大小）
+        function compressImage(base64, fileName, quality, originalSize) {
             const img = new Image();
             img.src = base64;
             img.onload = () => {
@@ -193,18 +208,26 @@
                 const compressedBase64 = canvas.toDataURL(outputType, quality);
                 const file = dataURLtoFile(compressedBase64, fileName);
                 compressedFiles.push({ file, base64: compressedBase64, name: fileName });
-                renderItem(file, compressedBase64, fileName);
+                // 调用时传入原始大小和压缩后大小
+                renderItem(file, compressedBase64, fileName, originalSize);
             };
         }
 
-        // 渲染单条结果
-        function renderItem(file, base64, name) {
+        // 渲染单条结果（新增：显示前后大小对比）
+        function renderItem(file, base64, name, originalSize) {
+            const compressedKB = (file.size / 1024).toFixed(1);
+            const originalKB = (originalSize / 1024).toFixed(1);
+            const reductionKB = (originalSize / 1024 - file.size / 1024).toFixed(1);
+            const reductionPercent = Math.round((1 - file.size / originalSize) * 100);
+
             const div = document.createElement('div');
             div.className = 'item-card';
             div.innerHTML = `
                 <img src="${base64}" alt="${name}">
                 <p style="font-size:14px;margin:0.3rem 0;">${name}</p>
-                <p style="font-size:13px;color:#666;margin-bottom:0.5rem;">${(file.size / 1024).toFixed(1)} KB</p>
+                <p class="size-compare original-size">原大小：${originalKB} KB</p>
+                <p class="size-compare compressed-size">压缩后：${compressedKB} KB</p>
+                <p class="size-compare reduction-percent">减少：${reductionKB} KB（约 ${reductionPercent}%）</p>
                 <a class="btn" href="${base64}" download="${name}">下载</a>
             `;
             resultList.appendChild(div);
@@ -223,13 +246,15 @@
         // 批量下载
         downloadAllBtn.addEventListener('click', () => {
             if(compressedFiles.length === 0) return alert('请先上传图片');
-            compressedFiles.forEach(item => {
-                const a = document.createElement('a');
-                a.href = item.base64;
-                a.download = item.name;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
+            compressedFiles.forEach((item, index) => {
+                setTimeout(() => {
+                    const a = document.createElement('a');
+                    a.href = item.base64;
+                    a.download = item.name;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                }, index * 500); // 延迟下载，避免浏览器拦截
             });
         });
     </script>
